@@ -203,8 +203,18 @@ function parseMetadataXml(xmlText) {
 
 async function extractFromDataMashup(arrayBuffer) {
   const outerZip = await JSZip.loadAsync(arrayBuffer);
-  const mashupFile = outerZip.file('DataMashup');
-  if (!mashupFile) throw new Error('No DataMashup found in archive');
+  // Search case-insensitively — real .pbix files may vary in path/casing
+  let mashupFile = outerZip.file('DataMashup');
+  if (!mashupFile) {
+    // Fallback: search all entries
+    const matches = outerZip.file(/datamashup$/i);
+    if (matches.length) mashupFile = matches[0];
+  }
+  if (!mashupFile) {
+    // Debug: list what's actually in the archive
+    const entries = Object.keys(outerZip.files).join(', ');
+    throw new Error('No DataMashup found in archive. Contents: ' + entries);
+  }
   const mashupBuf = await mashupFile.async('arraybuffer');
 
   const { pkgData, metadataXml } = parseDataMashup(mashupBuf);
