@@ -311,15 +311,26 @@
     return { fitToView };
   }
 
+  let inlineCtrl = null;
+
   function renderGraph(graphData) {
     lastGraphData = graphData;
-    const ctrl = buildGraphInto(graphData, graphSvg, graphContainer, graphTooltip,
+    inlineCtrl = buildGraphInto(graphData, graphSvg, graphContainer, graphTooltip,
       $('zoomIn'), $('zoomOut'), $('zoomFit'));
-    if (!ctrl) return;
+    if (!inlineCtrl) return;
     graphContainer.style.display = 'block';
     emptyState.style.display = 'none';
-    requestAnimationFrame(ctrl.fitToView);
+    requestAnimationFrame(inlineCtrl.fitToView);
   }
+
+  // Re-fit graph on window resize
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      if (inlineCtrl) inlineCtrl.fitToView();
+    }, 150);
+  });
 
   // ---- Fullscreen pop-out ----
   const fsOverlay = $('fsOverlay'), fsBody = $('fsBody'), fsSvg = $('fsSvg'), fsTooltip = $('fsTooltip');
